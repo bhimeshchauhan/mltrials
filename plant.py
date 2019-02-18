@@ -77,14 +77,29 @@ def main(argv):
         if area > 1000:
             final_contours.append(contour)
 
+    font = cv.FONT_HERSHEY_SIMPLEX
+    bottomLeftCornerOfText = (10, 500)
+    fontScale = 1
+    fontColor = (255, 255, 255)
+    lineType = 2
 
     for i in range(len(final_contours)):
+        area = cv.contourArea(final_contours[i])
+        # compute the center of the contour
+        M = cv.moments(final_contours[i])
+        print("M -> ", M, M["m10"],  M["m00"], M["m01"] )
+        cX = int(M["m10"] / M["m00"])
+        print("cX -> ", cX)
+        cY = int(M["m01"] / M["m00"])
+        print("cY -> ", cY)
+        print(i, " ---> ", area)
         src = cv.drawContours(src, final_contours, i, np.array([50, 250, 50]), 4)
+        src = cv.putText(src, str(area) ,  (cX - 20, cY - 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
 
     debug_img = src
-    debug_img = cv.resize(debug_img, None, fx=0.3, fy=0.3)
-    cv.imwrite("./out.png", debug_img)
+    # debug_img = cv.resize(debug_img, None, fx=0.3, fy=0.3)
+    cv.imwrite("./plant.png", debug_img)
 
 
     #################################################################################

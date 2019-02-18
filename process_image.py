@@ -137,7 +137,7 @@ def crop_image_based_on_markers(raw_image, points):
 
     # finding the transformation matrix
     M = cv2.getPerspectiveTransform(pts1,pts2)
-    cv2.imwrite('cropped_image_based_on_markers.jpg', cv2.warpPerspective(raw_image, M, (x_center - x_min, y_center - y_min)))
+    cv2.imwrite('cropped.jpg', cv2.warpPerspective(raw_image, M, (x_center - x_min, y_center - y_min)))
     # geometric transformation based on the transformation matrix
     return cv2.warpPerspective(raw_image, M, (x_center - x_min, y_center - y_min))
 

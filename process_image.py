@@ -243,10 +243,10 @@ def main():
         print("[FATAL] {} markers found! We need exactly 4 of them!".format(len(markers)))
         exit()
     undistorted_and_cropped_image = crop_image_based_on_markers(img, markers)
-    # area = pixels_of_plants_in_image(undistorted_and_cropped_image)
+    area = pixels_of_plants_in_image(undistorted_and_cropped_image)
 
     #return the area for the output
-    # print(area)
+    print(area)
 
 # we do this to make sure that if this file is run from other files, it will behave as expected
 if __name__ == "__main__": 

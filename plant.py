@@ -14,7 +14,6 @@ def main(argv):
         return -1
     
     #################################################################################
-
     #################################################################################
     
     gray = cv.cvtColor(src, cv.COLOR_BGR2RGB)
@@ -77,12 +76,6 @@ def main(argv):
         if area > 1000:
             final_contours.append(contour)
 
-    font = cv.FONT_HERSHEY_SIMPLEX
-    bottomLeftCornerOfText = (10, 500)
-    fontScale = 1
-    fontColor = (255, 255, 255)
-    lineType = 2
-
     for i in range(len(final_contours)):
         area = cv.contourArea(final_contours[i])
         # compute the center of the contour
@@ -94,7 +87,7 @@ def main(argv):
         print("cY -> ", cY)
         print(i, " ---> ", area)
         src = cv.drawContours(src, final_contours, i, np.array([50, 250, 50]), 4)
-        src = cv.putText(src, str(area) ,  (cX - 20, cY - 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        src = cv.putText(src, str(area) ,  (cX - 20, cY - 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
 
     debug_img = src

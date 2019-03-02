@@ -34,6 +34,7 @@ def main(argv):
     #################################################################################
 
     blur = cv.GaussianBlur(src, (15, 15), 2)
+    # blur = cv.bilateralFilter(src, 9 ,250,250)
     hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV_FULL)
     lower_green = np.array([37, 0, 0])
     upper_green = np.array([179, 255, 255])
@@ -73,7 +74,7 @@ def main(argv):
     final_contours = []
     for contour in contours:
         area = cv.contourArea(contour)
-        if area > 1000:
+        if area > 2000:
             final_contours.append(contour)
 
     for i in range(len(final_contours)):

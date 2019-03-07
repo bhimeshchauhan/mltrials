@@ -8,18 +8,17 @@ from scipy import ndimage
 from skimage.feature import peak_local_max
 from skimage.morphology import watershed
 
-
-# reading the arguments from the command line -i, or --image 
-# app = argparse.ArgumentParser()
-# app.add_argument("-fn", "--filename", required=True,
-# 	help="Name of the file to be processed")
-# app.add_argument("-o", "--output", required=True,
-# 	help="Output file name")
-# args = vars(app.parse_args())
+# reading the arguments from the command line -i, or --image
+app = argparse.ArgumentParser()
+app.add_argument("-fn", "--filename", required=True,
+                 help="Name of the file to be processed")
+app.add_argument("-o", "--output", required=True,
+                 help="Output file name")
+args = vars(app.parse_args())
 
 ########## variables
-# OUTPUT_FILE_NAME = args["output"]
-########## 
+OUTPUT_FILE_NAME = args["output"]
+##########
 
 
 # default values for the helper function
@@ -29,18 +28,18 @@ font_color = (0, 0, 0)
 margin = 5
 thickness = 1.2
 text_background = (255, 255, 255)
+
+
 # helper function to put text on the image
-
-
 def putTextWithBoundingBox(image, text, x, y, font, font_scale, color, thickness):
-
     text_size = cv2.getTextSize(text, font, font_scale, thickness)
     text_width = text_size[0][0]
     text_height = text_size[0][1]
     x_e = x + text_width
     y_e = y + text_height
-    cv2.rectangle(image, (x - margin - int(text_width/2) ,y - margin), (x_e + margin - int(text_width/2), y_e + margin), text_background, thickness = -1)
-    cv2.putText(image, text, (x - int(text_width/2), y + text_height), font, font_scale, color, thickness)
+    cv2.rectangle(image, (x - margin - int(text_width / 2), y - margin),
+                  (x_e + margin - int(text_width / 2), y_e + margin), text_background, thickness=-1)
+    cv2.putText(image, text, (x - int(text_width / 2), y + text_height), font, font_scale, color, thickness)
 
 
 def normalize_image(raw_image):
@@ -49,23 +48,24 @@ def normalize_image(raw_image):
     # b = B / R + G + B
 
     a = raw_image.sum(axis=2)
-    #remove zeros
-    a[a == 0] = 1 
+    # remove zeros
+    a[a == 0] = 1
     image_b = cv2.split(raw_image)[0] / a
     image_g = cv2.split(raw_image)[1] / a
     image_r = cv2.split(raw_image)[2] / a
 
-    # scale it up to 0-255 range 
+    # scale it up to 0-255 range
     norm_b = image_b * 255
     norm_g = image_g * 255
     norm_r = image_r * 255
 
     return cv2.merge((norm_b, norm_g, norm_r)).astype(np.uint8)
 
+
 def find_markers(raw_image):
     ########## variables
     MINIMUN_CONTOUR_AREA_BLUE = 850
-    points=[]
+    points = []
     ##########
     # color profile for Blue markers in HSV OpenCV: For HSV, Hue range is [0,179], Saturation range is [0,255] and Value range is [0,255]
     lower_blue_profile = np.array([100, 70, 105], dtype="uint8")
@@ -77,17 +77,17 @@ def find_markers(raw_image):
 
     mask_blue = cv2.inRange(raw_image, lower_blue_profile, upper_blue_profile)
     # Creaing element, and dialate and erode to remove unwanted pixel
-    kernel = np.ones((3,3), 'uint8')
+    kernel = np.ones((3, 3), 'uint8')
     dilate = cv2.dilate(mask_blue, kernel, iterations=1)
     mask_blue = cv2.erode(dilate, kernel, iterations=1)
-    # cv2.imwrite("find_markers.jpg", mask_blue)
-    # find the markers 
-    contours,_ = cv2.findContours(mask_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.imwrite("find_markers.jpg", mask_blue)
+    # find the markers
+    contours, _ = cv2.findContours(mask_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for c in contours:
-        area = cv2.contourArea(c)        
+        area = cv2.contourArea(c)
         # cv2.drawContours(mask_yellow, [c], -1, (0,0,255), 2)
-        if area < MINIMUN_CONTOUR_AREA_BLUE: # removing false positives 
+        if area < MINIMUN_CONTOUR_AREA_BLUE:  # removing false positives
             continue
         M = cv2.moments(c)
 
@@ -95,19 +95,18 @@ def find_markers(raw_image):
             cx = 0
             cy = 0
         else:
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
-            points.append([cx,cy])
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
+            points.append([cx, cy])
     return points
-    
+
+
 def crop_image_based_on_markers(raw_image, points):
-
     # Finding the location of the points
-    x_max, _ = max(points,key=lambda item:item[0])
-    _, y_max = max(points,key=lambda item:item[1])
-    x_min, _ = min(points,key=lambda item:item[0])
-    _, y_min = min(points,key=lambda item:item[1])
-
+    x_max, _ = max(points, key=lambda item: item[0])
+    _, y_max = max(points, key=lambda item: item[1])
+    x_min, _ = min(points, key=lambda item: item[0])
+    _, y_min = min(points, key=lambda item: item[1])
 
     # dividing the plane in to four sections to find which point is where
     # to locate the points of the rectangle. x_center,y_center are x,y of center of the 4 points
@@ -115,42 +114,43 @@ def crop_image_based_on_markers(raw_image, points):
     y_center = int((y_max - y_min) / 2 + y_min)
 
     # finding location of the points
-    point_nw = [0,0]
-    point_ne = [0,0]
-    point_sw = [0,0] 
-    point_se = [0,0]
+    point_nw = [0, 0]
+    point_ne = [0, 0]
+    point_sw = [0, 0]
+    point_se = [0, 0]
 
     for p in points:
-        x , y = p
-        if (x < x_center): # means that we are on the west side
-            if (y < y_center): # means north west
-                point_nw = [x,y]
+        x, y = p
+        if (x < x_center):  # means that we are on the west side
+            if (y < y_center):  # means north west
+                point_nw = [x, y]
             else:
-                point_sw = [x,y]
-        else: # on the east side
-            if (y < y_center): # means north east
-                point_ne = [x,y]
+                point_sw = [x, y]
+        else:  # on the east side
+            if (y < y_center):  # means north east
+                point_ne = [x, y]
             else:
-                point_se = [x,y]
+                point_se = [x, y]
 
     # arranging point to calculate the transformation matrix
     pts1 = np.float32([point_nw, point_ne, point_sw, point_se])
-    pts2 = np.float32([[0,0],[x_center - x_min,0],[0,y_center - y_min],[x_center - x_min,y_center - y_min]])
+    pts2 = np.float32([[0, 0], [x_center - x_min, 0], [0, y_center - y_min], [x_center - x_min, y_center - y_min]])
 
     # finding the transformation matrix
-    M = cv2.getPerspectiveTransform(pts1,pts2)
-    # cv2.imwrite('cropped.jpg', cv2.warpPerspective(raw_image, M, (x_center - x_min, y_center - y_min)))
+    M = cv2.getPerspectiveTransform(pts1, pts2)
+    cv2.imwrite('cropped.jpg', cv2.warpPerspective(raw_image, M, (x_center - x_min, y_center - y_min)))
     # geometric transformation based on the transformation matrix
     return cv2.warpPerspective(raw_image, M, (x_center - x_min, y_center - y_min))
 
-def pixels_of_plants_in_image(name, cropped_image):
+
+def pixels_of_plants_in_image(cropped_image):
     # ########## variables
     # ## in OpenCV b ranges from -127 to 127 (in L*a*b* color space). So, (b + 128) is used for thresholding
     # RED_THRESHOLD = 29+128
     # GREEN_THRESHOLD = 154
     # MINIMUN_CONTOUR_AREA = 3150
     # LOCAL_MAXIMA_MIN_DISTANCE = 55
-    markers_distance = 46 #inches
+    markers_distance = 46  # inches
     # index = -1
     # thickness = 2
     # color = (0,0,255)
@@ -196,9 +196,9 @@ def pixels_of_plants_in_image(name, cropped_image):
     # labels = watershed(-D, markers, mask=mask_combined)
     #
     # # calculate the ratio of pixels to inches
-    pixels = cropped_image.shape[1] # width of the corrected image
-    ratio = markers_distance/pixels
-    ratio = ratio * ratio # to make it area instead of line (2d)
+    pixels = cropped_image.shape[1]  # width of the corrected image
+    ratio = markers_distance / pixels
+    ratio = ratio * ratio  # to make it area instead of line (2d)
     #
     # # loop over the unique labels returned by the Watershed algorithm
     # for label in np.unique(labels):
@@ -225,10 +225,11 @@ def pixels_of_plants_in_image(name, cropped_image):
     # return round(total_area,2)
 
     # blur = cv2.GaussianBlur(cropped_image, (15, 15), 2)
-    blur = cv2.bilateralFilter(cropped_image, 9 ,250,250)
+    blur = cv2.bilateralFilter(cropped_image, 9, 250, 250)
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV_FULL)
     lower_green = np.array([37, 0, 0])
-    upper_green = np.array([179, 255, 255])
+    # upper_green = np.array([179, 255, 255])
+    upper_green = np.array([120, 110, 176])
     mask = cv2.inRange(hsv, lower_green, upper_green)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
     opened_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
@@ -242,16 +243,17 @@ def pixels_of_plants_in_image(name, cropped_image):
     black_pixels_mask = cv2.inRange(masked_img, np.array([0, 0, 0]), np.array([70, 70, 70]))
 
     # Get the mask for extreme white pixels.
-    white_pixels_mask = cv2.inRange(masked_img, np.array([230, 230, 230]), np.array([255, 255, 255]))
+    white_pixels_mask = cv2.inRange(masked_img, np.array([215, 215, 215]), np.array([255, 255, 255]))
 
     final_mask = cv2.max(bgd_mask, black_pixels_mask)
     final_mask = cv2.min(final_mask, ~white_pixels_mask)
     final_mask = ~final_mask
 
+    write_image_to_file(final_mask)
+
     final_mask = cv2.erode(final_mask, np.ones((3, 3), dtype=np.uint8))
     final_mask = cv2.dilate(final_mask, np.ones((5, 5), dtype=np.uint8))
 
-    write_image_to_file(name+"_final.jpg", final_mask)
     # cv2.imwrite('final_mask.png', final_mask)
     # Now you can finally find contours.
     contours, hierarchy = cv2.findContours(final_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -271,42 +273,33 @@ def pixels_of_plants_in_image(name, cropped_image):
         src = cv2.drawContours(cropped_image, final_contours, i, np.array([50, 250, 50]), 4)
         cv2.putText(src, str(area), (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
-    # write_image_to_file('./final/', src)
+    # write_image_to_file(src)
 
-def write_image_to_file(name, img):
 
-    # write the input image matrix to file 
-    # cv2.imwrite(OUTPUT_FILE_NAME, img)
-
-    cv2.imwrite(name, img)
+def write_image_to_file(img):
+    # write the input image matrix to file
+    cv2.imwrite(OUTPUT_FILE_NAME, img)
     return
 
-def main():
 
-    # read image from the input address 
-    # img = cv2.imread(args["filename"])
+def main():
+    # read image from the input address
+    img = cv2.imread(args["filename"])
 
     # check if the input file is readable
-    # if img is None:
-    #     print("[FATAL] The input file cannot be read.")
+    if img is None:
+        print("[FATAL] The input file cannot be read.")
+        exit()
+    # markers = find_markers(img)
+    # Check if we have detected enough points for correcting the image. We need exactly 4 points
+    # if len(markers) != 4:
+    #     print("[FATAL] {} markers found! We need exactly 4 of them!".format(len(markers)))
     #     exit()
-    images = ["img/test1.jpg","img/test2.jpg", "img/test3.jpg", "img/test4.jpg", "img/test5.jpg", "img/test6.jpg", "img/test7.jpg",
-              "img/test8.jpg","img/test9.jpg"]
-    for imgname in images:
-        img = cv2.imread(imgname)
-        markers = find_markers(img)
-        # Check if we have detected enough points for correcting the image. We need exactly 4 points
-        # if len(markers) !=4 :
-        #     print("[FATAL] {} markers found! We need exactly 4 of them!".format(len(markers)))
-        #     continue
-        # undistorted_and_cropped_image = crop_image_based_on_markers(img, markers)
-        name = imgname.split("/")[1]
-        strname = name.split(".")[0]
-        pixels_of_plants_in_image(strname, img)
-        # area = pixels_of_plants_in_image(undistorted_and_cropped_image)
+    # undistorted_and_cropped_image = crop_image_based_on_markers(img, markers)
+    area = pixels_of_plants_in_image(img)
 
-        # return the area for the output
-        # print(area)
+    # return the area for the output
+    print(area)
 
 
 # we do this to make sure that if this file is run from other files, it will behave as expected

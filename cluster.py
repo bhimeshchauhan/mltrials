@@ -8,6 +8,7 @@ import argparse
 import utils
 import cv2
 
+MINIMUN_CONTOUR_AREA_BLUE = 850
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "Path to the image")
@@ -18,6 +19,11 @@ args = vars(ap.parse_args())
 # load the image and convert it from BGR to RGB so that
 # we can dispaly it with matplotlib
 image = cv2.imread(args["image"])
+width, height, channels = image.shape
+area = width*height
+print("*************")
+print("*************", area)
+print("*************")
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 # show our image
@@ -36,9 +42,12 @@ clt.fit(image)
 # representing the number of pixels labeled to each color
 hist = utils.centroid_histogram(clt)
 bar = utils.plot_colors(hist, clt.cluster_centers_)
+print(sum(bar), MINIMUN_CONTOUR_AREA_BLUE)
+print("area is "+ str(sum(bar)*MINIMUN_CONTOUR_AREA_BLUE)+ " inches square")
+
 
 # show our color bart
-plt.figure()
-plt.axis("off")
-plt.imshow(bar)
-plt.show()
+# plt.figure()
+# plt.axis("off")
+# plt.imshow(bar)
+# plt.show()

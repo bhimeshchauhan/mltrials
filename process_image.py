@@ -225,43 +225,45 @@ def pixels_of_plants_in_image(cropped_image):
     # return round(total_area,2)
 
     # blur = cv2.GaussianBlur(cropped_image, (15, 15), 2)
-    blur = cv2.bilateralFilter(cropped_image, 9, 250, 250)
-    hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV_FULL)
-    lower_green = np.array([37, 0, 0])
+    # blur = cv2.bilateralFilter(cropped_image, 9, 250, 250)
+    hsv = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2HSV_FULL)
+    lower_green = np.array([0,70,100])
     # upper_green = np.array([179, 255, 255])
-    upper_green = np.array([120, 110, 176])
+    upper_green = np.array([50,255,255])
     mask = cv2.inRange(hsv, lower_green, upper_green)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
-    opened_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    masked_img = cv2.bitwise_and(cropped_image, cropped_image, mask=opened_mask)
-    img_hsv = cv2.cvtColor(masked_img, cv2.COLOR_BGR2HSV_FULL)
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+    # opened_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    # masked_img = cv2.bitwise_and(cropped_image, cropped_image, mask=opened_mask)
+    # img_hsv = cv2.cvtColor(masked_img, cv2.COLOR_BGR2HSV_FULL)
 
     # Filter out low saturation values, which means gray-scale pixels(majorly in background)
-    bgd_mask = cv2.inRange(img_hsv, np.array([0, 0, 0]), np.array([255, 30, 255]))
+    # bgd_mask = cv2.inRange(img_hsv, np.array([0, 0, 0]), np.array([255, 30, 255]))
 
     # Get a mask for pitch black pixel values
-    black_pixels_mask = cv2.inRange(masked_img, np.array([0, 0, 0]), np.array([70, 70, 70]))
+    # black_pixels_mask = cv2.inRange(masked_img, np.array([0, 0, 0]), np.array([70, 70, 70]))
 
     # Get the mask for extreme white pixels.
-    white_pixels_mask = cv2.inRange(masked_img, np.array([215, 215, 215]), np.array([255, 255, 255]))
+    # white_pixels_mask = cv2.inRange(masked_img, np.array([215, 215, 215]), np.array([255, 255, 255]))
 
-    final_mask = cv2.max(bgd_mask, black_pixels_mask)
-    final_mask = cv2.min(final_mask, ~white_pixels_mask)
-    final_mask = ~final_mask
+    # final_mask = cv2.max(bgd_mask, black_pixels_mask)
+    # final_mask = cv2.min(final_mask, ~white_pixels_mask)
+    # final_mask = ~final_mask
 
-    write_image_to_file(final_mask)
+    # write_image_to_file(final_mask)
 
-    final_mask = cv2.erode(final_mask, np.ones((3, 3), dtype=np.uint8))
-    final_mask = cv2.dilate(final_mask, np.ones((5, 5), dtype=np.uint8))
+    # final_mask = cv2.erode(final_mask, np.ones((3, 3), dtype=np.uint8))
+    # final_mask = cv2.dilate(final_mask, np.ones((5, 5), dtype=np.uint8))
 
     # cv2.imwrite('final_mask.png', final_mask)
     # Now you can finally find contours.
-    contours, hierarchy = cv2.findContours(final_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    res = cv2.bitwise_and(cropped_image, cropped_image, mask=mask)
+    cv2.imwrite('res.jpg', res)
+    contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     final_contours = []
     for contour in contours:
         area = cv2.contourArea(contour)
-        if 1200 < area:
+        if 900 < area:
             final_contours.append(contour)
 
     for i in range(len(final_contours)):
@@ -273,7 +275,7 @@ def pixels_of_plants_in_image(cropped_image):
         src = cv2.drawContours(cropped_image, final_contours, i, np.array([50, 250, 50]), 4)
         cv2.putText(src, str(area), (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
-    # write_image_to_file(src)
+    write_image_to_file(src)
 
 
 def write_image_to_file(img):

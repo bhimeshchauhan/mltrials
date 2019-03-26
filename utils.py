@@ -1,8 +1,11 @@
 # import the necessary packages
 import numpy as np
+from skimage import color
+from colour import Color
 import cv2
 import webcolors
-
+import math
+from PIL import Image, ImageCms
 
 def centroid_histogram(clt):
     # grab the number of different clusters and create a histogram
@@ -28,14 +31,19 @@ def plot_colors(hist, centroids):
 
     # loop over the percentage of each cluster and the color of
     # each cluster
-    for (percent, color) in zip(hist, centroids):
-        # plot the relative percentage of each cluster
+    for (percent, colour) in zip(hist, centroids):
+        colorList = list(colour.astype("uint8"))
+        colorLab = color.rgb2lab([[colorList]])
 
-        green = classify(tuple(color.astype("uint8")))
-        if(green is "green"):
-            print("color #####", list(color.astype("uint8")), color.astype(np.float64))
+        # plot the relative percentage of each cluster
+        isGreen = classify(colorLab.tolist()[0][0][1])
+
+        if(isGreen):
+            print("color #####", tuple(colour.astype("uint8")), isGreen)
             print("per #####", percent * 100)
-            print("000000000000000")
+        #     print("color ceil #####", color.bgr2lab(list(color.astype("uint8"))))
+        #     # print("lol #####", webcolors.rgb_to_name(tuple(color.astype("uint8"))))
+        #     print("000000000000000")
             col.append(percent)
         # print( "nope ",   webcolors.rgb_to_name(list(color.astype("uint8"))),percent*100)
         # endX = startX + (percent * 300)
@@ -46,17 +54,8 @@ def plot_colors(hist, centroids):
     # return bar
     return col
 
-def classify(rgb_tuple):
-    # eg. rgb_tuple = (2,44,300)
+def classify(aValue):
+    # print("checking for", aValue)
+    if(aValue < -1):
+        return True
 
-    # add as many colors as appropriate here, but for
-    # the stated use case you just want to see if your
-    # pixel is 'more red' or 'more green'
-    colors = {"not green": (255, 0, 0),
-              "green" : (0,255,0),
-              }
-
-    manhattan = lambda x,y : abs(x[0] - y[0]) + abs(x[1] - y[1]) + abs(x[2] - y[2])
-    distances = {k: manhattan(v, rgb_tuple) for k, v in colors.items()}
-    color = min(distances, key=distances.get)
-    return color
